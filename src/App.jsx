@@ -203,9 +203,7 @@ function AdminApp({user,profile,onLogout}){
     if(!nCName||!nCEmail){showToast("Preenche o nome e email da empresa.",C.red);return;}
     setCreating(true);
     // Criar utilizador
-    const{data,error}=await sb.auth.admin?
-      {data:null,error:{message:"Admin API não disponível no cliente"}}:
-      await sb.auth.signUp({email:nCEmail,password:nCPass,options:{data:{display_name:nCName,role:"company"}}});
+    // apaga essas 3 linhas completamente — não precisas delas
 
     // Como não temos admin API no cliente, usamos uma abordagem diferente:
     // Criamos a empresa e depois o utilizador tem de se registar e ser activado
