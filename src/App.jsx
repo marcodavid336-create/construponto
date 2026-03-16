@@ -200,7 +200,7 @@ function AdminApp({user,profile,onLogout}){
   function showToast(msg,color=C.green){setToast({msg,color});setTimeout(()=>setToast(null),2800);}
 
   async function createCompany(){
-    if(!nCName||!nCEmail||!nCPass){showToast("Preenche todos os campos",C.red);return;}
+    if(!nCName||!nCEmail){showToast("Preenche todos os campos",C.red);return;}
     setCreating(true);
     // Criar utilizador
     const{data,error}=await sb.auth.admin?
