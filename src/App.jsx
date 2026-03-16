@@ -177,7 +177,6 @@ function AdminApp({user,profile,onLogout}){
   // Criar empresa
   const [nCName,setNCName]=useState("");
   const [nCEmail,setNCEmail]=useState("");
-  const [nCPass,setNCPass]=useState("");
   const [creating,setCreating]=useState(false);
 
   useEffect(()=>{const t=setInterval(()=>setNow(new Date()),1000);return()=>clearInterval(t);},[]);
@@ -199,18 +198,13 @@ function AdminApp({user,profile,onLogout}){
 
   function showToast(msg,color=C.green){setToast({msg,color});setTimeout(()=>setToast(null),2800);}
 
- async function createCompany(){
-    if(!nCName||!nCEmail){showToast("Preenche o nome e email da empresa.",C.red);return;}
+  async function createCompany(){
+    if(!nCName){showToast("Introduz o nome da empresa.",C.red);return;}
     setCreating(true);
-    // Criar utilizador
-    // apaga essas 3 linhas completamente — não precisas delas
-
-    // Como não temos admin API no cliente, usamos uma abordagem diferente:
-    // Criamos a empresa e depois o utilizador tem de se registar e ser activado
-    const{data:comp,error:compErr}=await sb.from("companies").insert({name:nCName,email:nCEmail}).select().single();
-    if(compErr){showToast("Erro ao criar empresa: "+compErr.message,C.red);setCreating(false);return;}
-    showToast(`Empresa "${nCName}" criada! O responsável deve registar-se com ${nCEmail} e será activado aqui.`);
-    setNCName("");setNCEmail("");setNCPass("");
+    const{data:comp,error:compErr}=await sb.from("companies").insert({name:nCName,email:nCEmail||null}).select().single();
+    if(compErr){showToast("Erro: "+compErr.message,C.red);setCreating(false);return;}
+    showToast(`Empresa "${nCName}" criada! ✓`);
+    setNCName("");setNCEmail("");
     await loadAll();
     setCreating(false);
   }
@@ -800,3 +794,4 @@ function EmployeeApp({user,profile,onLogout}){
     </div>
   );
 }
+
