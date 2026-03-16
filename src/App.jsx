@@ -1,5 +1,4 @@
-import React from "react";
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { createClient } from "@supabase/supabase-js";
 
 const SUPABASE_URL = "https://dvtrvpilhdxtfbzbvyae.supabase.co";
@@ -28,13 +27,103 @@ function CardHead({children,extra}){return<div style={{padding:"14px 20px",borde
 function Stat({label,value,sub,color=C.orange}){return<Card style={{padding:"18px 22px"}}><div style={{color:C.muted,fontSize:10,fontFamily:"'Barlow Condensed',sans-serif",letterSpacing:2,textTransform:"uppercase",marginBottom:8}}>{label}</div><div style={{color,fontSize:30,fontFamily:"'Barlow Condensed',sans-serif",fontWeight:700,lineHeight:1}}>{value}</div>{sub&&<div style={{color:C.dim,fontSize:11,marginTop:6}}>{sub}</div>}</Card>;}
 function Sel({value,onChange,children,style={}}){return<select value={value} onChange={e=>onChange(e.target.value)} style={{background:C.s3,border:`1px solid ${C.border}`,color:value?C.text:C.muted,padding:"9px 12px",borderRadius:6,fontSize:13,fontFamily:"'Barlow',sans-serif",width:"100%",outline:"none",cursor:"pointer",...style}}>{children}</select>;}
 function Inp({value,onChange,placeholder,type="text",style={}}){return<input type={type} value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder} style={{background:C.s3,border:`1px solid ${C.border}`,color:C.text,padding:"9px 12px",borderRadius:6,fontSize:13,fontFamily:"'Barlow',sans-serif",width:"100%",outline:"none",...style}}/>;}
-function Btn({children,onClick,variant="primary",disabled=false,style={}}){const bg=disabled?C.dim:variant==="primary"?C.orange:variant==="green"?"#22C55E":variant==="red"?"#EF4444":C.s3;const fg=variant==="ghost"?C.muted:"#000";return<button onClick={disabled?undefined:onClick} style={{background:bg,border:variant==="ghost"?`1px solid ${C.border}`:"none",color:fg,padding:"9px 18px",borderRadius:6,fontSize:12,fontFamily:"'Barlow Condensed',sans-serif",fontWeight:700,letterSpacing:1.2,textTransform:"uppercase",cursor:disabled?"not-allowed":"pointer",opacity:disabled?.4:1,whiteSpace:"nowrap",...style}}>{children}</button>;}
+function Btn({children,onClick,variant="primary",disabled=false,style={}}){const bg=disabled?C.dim:variant==="primary"?C.orange:variant==="green"?"#22C55E":variant==="red"?"#EF4444":variant==="ghost"?C.s3:C.orange;const fg=variant==="ghost"?C.muted:"#000";return<button onClick={disabled?undefined:onClick} style={{background:bg,border:variant==="ghost"?`1px solid ${C.border}`:"none",color:fg,padding:"9px 18px",borderRadius:6,fontSize:12,fontFamily:"'Barlow Condensed',sans-serif",fontWeight:700,letterSpacing:1.2,textTransform:"uppercase",cursor:disabled?"not-allowed":"pointer",opacity:disabled?.4:1,whiteSpace:"nowrap",...style}}>{children}</button>;}
 function Badge({children,color=C.orange}){const bg={[C.orange]:C.orangeD,[C.green]:C.greenD,[C.red]:C.redD,[C.yellow]:C.yellowD};return<span style={{background:bg[color]||"rgba(255,255,255,0.07)",color,padding:"2px 9px",borderRadius:99,fontSize:10,fontFamily:"'Barlow Condensed',sans-serif",fontWeight:700,letterSpacing:0.5,textTransform:"uppercase"}}>{children}</span>;}
 function Dot({color}){return<span style={{width:7,height:7,borderRadius:"50%",background:color,display:"inline-block",boxShadow:`0 0 6px ${color}`,marginRight:7}}/>;}
 function Label({children}){return<div style={{fontSize:10,color:C.muted,fontFamily:"'Barlow Condensed',sans-serif",letterSpacing:1.2,textTransform:"uppercase",marginBottom:5}}>{children}</div>;}
 function Spinner(){return<div style={{display:"flex",alignItems:"center",justifyContent:"center",padding:60}}><div style={{width:32,height:32,border:`3px solid ${C.border}`,borderTop:`3px solid ${C.orange}`,borderRadius:"50%",animation:"spin 0.8s linear infinite"}}/><style>{`@keyframes spin{to{transform:rotate(360deg);}}`}</style></div>;}
 
+// ── ECRÃ DE LOGIN ─────────────────────────────────────────────────────────────
+function AuthScreen({onAuth}) {
+  const [mode, setMode] = useState("login");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [company, setCompany] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  async function handleSubmit() {
+    if (!email || !password) return;
+    setLoading(true); setError("");
+    if (mode === "login") {
+      const { data, error } = await sb.auth.signInWithPassword({ email, password });
+      if (error) setError("Email ou password incorrectos.");
+      else onAuth(data.user);
+    } else {
+      if (!company) { setError("Introduz o nome da empresa."); setLoading(false); return; }
+      const { data, error } = await sb.auth.signUp({ email, password, options: { data: { company_name: company } } });
+      if (error) setError(error.message);
+      else if (data.user) onAuth(data.user);
+      else setError("Verifica o teu email para confirmar o registo.");
+    }
+    setLoading(false);
+  }
+
+  return (
+    <div style={{minHeight:"100vh",background:C.bg,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Barlow',sans-serif"}}>
+      <div style={{width:"100%",maxWidth:420,padding:"0 24px"}}>
+        {/* Logo */}
+        <div style={{textAlign:"center",marginBottom:40}}>
+          <div style={{display:"inline-flex",alignItems:"center",justifyContent:"center",background:C.orange,width:56,height:56,borderRadius:12,fontSize:28,marginBottom:16}}>⚙</div>
+          <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontWeight:900,fontSize:28,letterSpacing:3,textTransform:"uppercase",color:C.text}}>ConstruPonto</div>
+          <div style={{fontSize:12,color:C.muted,letterSpacing:1.5,textTransform:"uppercase",marginTop:4}}>Gestão de Horas & Armazém</div>
+        </div>
+
+        <Card style={{padding:28}}>
+          {/* Tabs */}
+          <div style={{display:"flex",gap:0,marginBottom:24,background:C.s3,borderRadius:7,padding:3}}>
+            {[{id:"login",l:"Entrar"},{id:"register",l:"Registar Empresa"}].map(t=>(
+              <button key={t.id} onClick={()=>{setMode(t.id);setError("");}} style={{flex:1,background:mode===t.id?C.s1:"transparent",border:mode===t.id?`1px solid ${C.border}`:"none",color:mode===t.id?C.text:C.muted,padding:"8px 0",borderRadius:5,fontFamily:"'Barlow Condensed',sans-serif",fontWeight:600,fontSize:12,letterSpacing:1.2,textTransform:"uppercase",cursor:"pointer"}}>{t.l}</button>
+            ))}
+          </div>
+
+          {mode==="register" && <div style={{marginBottom:16}}><Label>Nome da Empresa</Label><Inp value={company} onChange={setCompany} placeholder="Ex: Construções Silva Lda"/></div>}
+          <div style={{marginBottom:16}}><Label>Email</Label><Inp type="email" value={email} onChange={setEmail} placeholder="email@empresa.pt"/></div>
+          <div style={{marginBottom:error?12:20}}><Label>Password</Label><Inp type="password" value={password} onChange={setPassword} placeholder="Mínimo 6 caracteres"/></div>
+
+          {error && <div style={{background:C.redD,border:`1px solid ${C.red}33`,color:C.red,padding:"9px 14px",borderRadius:6,fontSize:12,marginBottom:16}}>{error}</div>}
+
+          <Btn onClick={handleSubmit} disabled={loading} style={{width:"100%",padding:"13px",fontSize:14,letterSpacing:2}}>
+            {loading ? "A processar..." : mode==="login" ? "▶  Entrar" : "+ Criar Conta"}
+          </Btn>
+        </Card>
+
+        <div style={{textAlign:"center",marginTop:24,fontSize:11,color:C.dim}}>
+          Cada empresa tem os seus dados privados e seguros.
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── APP PRINCIPAL ─────────────────────────────────────────────────────────────
 export default function ConstruPonto() {
+  const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
+  useEffect(() => {
+    sb.auth.getSession().then(({ data }) => {
+      setUser(data.session?.user || null);
+      setAuthLoading(false);
+    });
+    const { data: listener } = sb.auth.onAuthStateChange((_e, session) => {
+      setUser(session?.user || null);
+    });
+    return () => listener.subscription.unsubscribe();
+  }, []);
+
+  async function handleLogout() {
+    await sb.auth.signOut();
+    setUser(null);
+  }
+
+  if (authLoading) return <div style={{minHeight:"100vh",background:"#080808",display:"flex",alignItems:"center",justifyContent:"center"}}><Spinner/></div>;
+  if (!user) return <AuthScreen onAuth={setUser}/>;
+  return <AppMain user={user} onLogout={handleLogout}/>;
+}
+
+// ── APP MAIN ──────────────────────────────────────────────────────────────────
+function AppMain({user, onLogout}) {
   const [view,setView]=useState("dashboard");
   const [loading,setLoading]=useState(true);
   const [employees,setEmployees]=useState([]);
@@ -58,11 +147,11 @@ export default function ConstruPonto() {
   const loadAll=useCallback(async()=>{
     setLoading(true);
     const[e,o,t,p,f]=await Promise.all([
-      sb.from("employees").select("*").order("name"),
-      sb.from("obras").select("*").order("name"),
-      sb.from("tools").select("*").order("name"),
-      sb.from("pontos").select("*").order("clock_in",{ascending:false}),
-      sb.from("ferramentas").select("*").order("date",{ascending:false}),
+      sb.from("employees").select("*").eq("user_id",user.id).order("name"),
+      sb.from("obras").select("*").eq("user_id",user.id).order("name"),
+      sb.from("tools").select("*").eq("user_id",user.id).order("name"),
+      sb.from("pontos").select("*").eq("user_id",user.id).order("clock_in",{ascending:false}),
+      sb.from("ferramentas").select("*").eq("user_id",user.id).order("date",{ascending:false}),
     ]);
     if(e.data)setEmployees(e.data);
     if(o.data)setObras(o.data);
@@ -70,7 +159,7 @@ export default function ConstruPonto() {
     if(p.data)setPontos(p.data);
     if(f.data)setFerRegs(f.data);
     setLoading(false);
-  },[]);
+  },[user.id]);
 
   useEffect(()=>{loadAll();},[loadAll]);
 
@@ -97,7 +186,7 @@ export default function ConstruPonto() {
       else showToast("Erro ao registar saída",C.red);
     }else{
       if(!pObra){setSaving(false);return;}
-      const{error}=await sb.from("pontos").insert({employee_id:empId,obra_id:parseInt(pObra),clock_in:new Date().toISOString()});
+      const{error}=await sb.from("pontos").insert({employee_id:empId,obra_id:parseInt(pObra),clock_in:new Date().toISOString(),user_id:user.id});
       if(!error){showToast(`Entrada registada — ${getEmp(empId)?.name}`);await loadAll();}
       else showToast("Erro ao registar entrada",C.red);
     }
@@ -107,7 +196,7 @@ export default function ConstruPonto() {
   async function handleFer(){
     if(!fEmp||!fObra||!fTool||saving)return;
     setSaving(true);
-    const{error}=await sb.from("ferramentas").insert({employee_id:parseInt(fEmp),obra_id:parseInt(fObra),tool_id:parseInt(fTool),qty:parseInt(fQty)||1,date:new Date().toISOString()});
+    const{error}=await sb.from("ferramentas").insert({employee_id:parseInt(fEmp),obra_id:parseInt(fObra),tool_id:parseInt(fTool),qty:parseInt(fQty)||1,date:new Date().toISOString(),user_id:user.id});
     if(!error){showToast(`${getTool(parseInt(fTool))?.name} registada`);setFTool("");setFQty(1);await loadAll();}
     else showToast("Erro ao registar ferramenta",C.red);
     setSaving(false);
@@ -119,15 +208,16 @@ export default function ConstruPonto() {
     else showToast("Erro",C.red);
   }
 
-  async function addEmp(){if(!nEN)return;const{error}=await sb.from("employees").insert({name:nEN,role:nER});if(!error){setNEN("");setNER("");showToast("Funcionário adicionado");await loadAll();}else showToast("Erro ao adicionar",C.red);}
-  async function addObra(){if(!nON)return;const{error}=await sb.from("obras").insert({name:nON,location:nOL});if(!error){setNON("");setNOL("");showToast("Obra adicionada");await loadAll();}else showToast("Erro",C.red);}
-  async function addTool(){if(!nTN)return;const{error}=await sb.from("tools").insert({name:nTN,category:nTC});if(!error){setNTN("");setNTC("");showToast("Ferramenta adicionada");await loadAll();}else showToast("Erro",C.red);}
+  async function addEmp(){if(!nEN)return;const{error}=await sb.from("employees").insert({name:nEN,role:nER,user_id:user.id});if(!error){setNEN("");setNER("");showToast("Funcionário adicionado");await loadAll();}else showToast("Erro",C.red);}
+  async function addObra(){if(!nON)return;const{error}=await sb.from("obras").insert({name:nON,location:nOL,user_id:user.id});if(!error){setNON("");setNOL("");showToast("Obra adicionada");await loadAll();}else showToast("Erro",C.red);}
+  async function addTool(){if(!nTN)return;const{error}=await sb.from("tools").insert({name:nTN,category:nTC,user_id:user.id});if(!error){setNTN("");setNTC("");showToast("Ferramenta adicionada");await loadAll();}else showToast("Erro",C.red);}
   async function delEmp(id){if(!window.confirm("Apagar funcionário?"))return;await sb.from("employees").delete().eq("id",id);await loadAll();}
   async function delObra(id){if(!window.confirm("Apagar obra?"))return;await sb.from("obras").delete().eq("id",id);await loadAll();}
   async function delTool(id){if(!window.confirm("Apagar ferramenta?"))return;await sb.from("tools").delete().eq("id",id);await loadAll();}
 
   const selectedEmpActive=pEmp?activeFor(parseInt(pEmp)):null;
   const selectedEmp=pEmp?getEmp(parseInt(pEmp)):null;
+  const companyName=user.user_metadata?.company_name||user.email;
 
   const nav=[
     {id:"dashboard",icon:"◈",label:"Dashboard"},
@@ -158,13 +248,14 @@ export default function ConstruPonto() {
     {toast&&<div style={{position:"fixed",bottom:24,right:24,background:C.s2,border:`1px solid ${toast.color}44`,color:toast.color,padding:"12px 20px",borderRadius:8,fontFamily:"'Barlow',sans-serif",fontSize:13,zIndex:9999,boxShadow:"0 8px 32px rgba(0,0,0,0.5)"}}>{toast.msg}</div>}
 
     <div style={{minHeight:"100vh",background:C.bg,color:C.text,fontFamily:"'Barlow',sans-serif",display:"flex",flexDirection:"column"}}>
+      {/* HEADER */}
       <div style={{background:C.s1,borderBottom:`1px solid ${C.border}`,position:"sticky",top:0,zIndex:100}}>
         <div style={{maxWidth:1280,margin:"0 auto",padding:"0 24px",display:"flex",alignItems:"center",gap:16}}>
           <div style={{display:"flex",alignItems:"center",gap:10,padding:"12px 0",flexShrink:0}}>
             <div style={{background:C.orange,color:"#000",width:34,height:34,borderRadius:5,display:"flex",alignItems:"center",justifyContent:"center",fontSize:19,fontWeight:900}}>⚙</div>
             <div>
               <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontWeight:900,fontSize:17,letterSpacing:2.5,textTransform:"uppercase"}}>ConstruPonto</div>
-              <div style={{fontSize:9,color:C.muted,letterSpacing:1.5,textTransform:"uppercase"}}>Gestão de Horas & Armazém</div>
+              <div style={{fontSize:9,color:C.muted,letterSpacing:1.5,textTransform:"uppercase"}}>{companyName}</div>
             </div>
           </div>
           <div style={{display:"flex",flex:1}}>
@@ -174,21 +265,23 @@ export default function ConstruPonto() {
               </button>
             ))}
           </div>
-          <div style={{textAlign:"right",flexShrink:0}}>
-            <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:18,fontWeight:500,letterSpacing:2}}>{now.toLocaleTimeString("pt-PT",{hour:"2-digit",minute:"2-digit",second:"2-digit"})}</div>
-            <div style={{fontSize:10,color:C.muted,marginTop:1}}>{now.toLocaleDateString("pt-PT",{weekday:"short",day:"2-digit",month:"short",year:"numeric"})}</div>
+          <div style={{display:"flex",alignItems:"center",gap:16,flexShrink:0}}>
+            <div style={{textAlign:"right"}}>
+              <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:16,fontWeight:500,letterSpacing:2}}>{now.toLocaleTimeString("pt-PT",{hour:"2-digit",minute:"2-digit",second:"2-digit"})}</div>
+              <div style={{fontSize:10,color:C.muted,marginTop:1}}>{now.toLocaleDateString("pt-PT",{weekday:"short",day:"2-digit",month:"short"})}</div>
+            </div>
+            <button onClick={onLogout} style={{background:"none",border:`1px solid ${C.border}`,color:C.muted,padding:"6px 12px",borderRadius:5,fontSize:10,fontFamily:"'Barlow Condensed',sans-serif",fontWeight:600,letterSpacing:1,textTransform:"uppercase",cursor:"pointer"}}>Sair</button>
           </div>
         </div>
       </div>
 
+      {/* BODY */}
       <div style={{flex:1,maxWidth:1280,width:"100%",margin:"0 auto",padding:"28px 24px"}}>
         {loading?<Spinner/>:<>
 
+        {/* DASHBOARD */}
         {view==="dashboard"&&<div>
-          <div style={{marginBottom:22}}>
-            <h1 style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:26,fontWeight:700}}>Dashboard</h1>
-            <p style={{color:C.muted,fontSize:13,marginTop:3}}>Resumo de actividade — hoje e acumulado</p>
-          </div>
+          <div style={{marginBottom:22}}><h1 style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:26,fontWeight:700}}>Dashboard</h1><p style={{color:C.muted,fontSize:13,marginTop:3}}>Resumo de actividade — hoje e acumulado</p></div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14,marginBottom:24}}>
             <Stat label="Horas Hoje" value={fmtH(totalHrsToday)} sub={`${todayPontos.length} registos hoje`}/>
             <Stat label="Em Obra Agora" value={activeSessions.length} sub="sessões abertas" color={C.green}/>
@@ -215,6 +308,7 @@ export default function ConstruPonto() {
           </Card>
         </div>}
 
+        {/* PONTO */}
         {view==="ponto"&&<div>
           <div style={{marginBottom:22}}><h1 style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:26,fontWeight:700}}>Registo de Ponto</h1><p style={{color:C.muted,fontSize:13,marginTop:3}}>Marcar entrada e saída por funcionário e obra</p></div>
           <div style={{display:"grid",gridTemplateColumns:"360px 1fr",gap:18,alignItems:"start"}}>
@@ -238,6 +332,7 @@ export default function ConstruPonto() {
           </div>
         </div>}
 
+        {/* FERRAMENTAS */}
         {view==="ferramentas"&&<div>
           <div style={{marginBottom:22}}><h1 style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:26,fontWeight:700}}>Ferramentas</h1><p style={{color:C.muted,fontSize:13,marginTop:3}}>Levantamento e devolução de ferramentas do armazém</p></div>
           <div style={{display:"grid",gridTemplateColumns:"360px 1fr",gap:18,alignItems:"start"}}>
@@ -264,6 +359,7 @@ export default function ConstruPonto() {
           </div>
         </div>}
 
+        {/* RELATÓRIOS */}
         {view==="relatorios"&&<div>
           <div style={{marginBottom:18}}><h1 style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:26,fontWeight:700}}>Relatórios</h1><p style={{color:C.muted,fontSize:13,marginTop:3}}>Análise de horas, presenças e ferramentas</p></div>
           <div style={{display:"flex",gap:2,borderBottom:`1px solid ${C.border}`,marginBottom:22}}>
@@ -280,7 +376,7 @@ export default function ConstruPonto() {
               <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14,marginBottom:22}}>
                 <Stat label="Total Horas" value={fmtH(totalMs)} sub={`${done.length} registos`}/><Stat label="Funcionários" value={employees.length} sub="registados" color={C.blue}/><Stat label="Obras" value={obras.length} sub="em curso" color={C.green}/><Stat label="Ferramentas" value={ferRegs.length} sub={`${toolsOut.length} por devolver`} color={C.yellow}/>
               </div>
-              {empRank.length===0?<Card style={{padding:"24px 20px",textAlign:"center"}}><div style={{color:C.muted}}>Sem registos de ponto ainda.</div></Card>
+              {empRank.length===0?<Card style={{padding:"24px 20px",textAlign:"center"}}><div style={{color:C.muted}}>Sem registos ainda. Começa por adicionar funcionários e obras em Gestão.</div></Card>
               :<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:18}}>
                 <Card><CardHead>Horas por Funcionário</CardHead><table><thead><tr><th>#</th><th>Funcionário</th><th>Função</th><th>Dias</th><th>Total</th></tr></thead><tbody>{empRank.map(({emp,hrs,dias},i)=><tr key={emp.id}><td style={{color:C.dim,fontFamily:"'IBM Plex Mono',monospace",fontSize:11}}>{i+1}</td><td style={{fontWeight:600}}>{emp.name}</td><td style={{color:C.muted}}>{emp.role}</td><td style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11}}>{dias}</td><td style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:13,color:C.orange,fontWeight:500}}>{fmtH(hrs)}</td></tr>)}</tbody></table></Card>
                 <Card><CardHead>Horas por Obra</CardHead><table><thead><tr><th>#</th><th>Obra</th><th>Local</th><th>Funcs.</th><th>Total</th></tr></thead><tbody>{obraRank.map(({obra,hrs,funcs},i)=><tr key={obra.id}><td style={{color:C.dim,fontFamily:"'IBM Plex Mono',monospace",fontSize:11}}>{i+1}</td><td style={{fontWeight:600}}>{obra.name}</td><td style={{color:C.muted}}>{obra.location}</td><td style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11}}>{funcs}</td><td style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:13,color:C.orange,fontWeight:500}}>{fmtH(hrs)}</td></tr>)}</tbody></table></Card>
@@ -293,13 +389,8 @@ export default function ConstruPonto() {
               const eps=pontos.filter(p=>p.employee_id===emp.id);
               const hrs=eps.filter(p=>p.clock_out).reduce((a,p)=>a+durMs(p.clock_in,p.clock_out),0);
               const byObra=obras.map(o=>({obra:o,hrs:eps.filter(p=>p.obra_id===o.id&&p.clock_out).reduce((a,p)=>a+durMs(p.clock_in,p.clock_out),0),dias:new Set(eps.filter(p=>p.obra_id===o.id).map(p=>new Date(p.clock_in).toDateString())).size})).filter(x=>x.hrs>0);
-              return<Card key={emp.id} style={{marginBottom:16}}>
-                <div style={{padding:"14px 20px",borderBottom:`1px solid ${C.border}`,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                  <div><div style={{fontFamily:"'Barlow Condensed',sans-serif",fontWeight:700,fontSize:17}}>{emp.name}</div><div style={{fontSize:12,color:C.muted,marginTop:2}}>{emp.role} · {eps.length} registos</div></div>
-                  <div style={{textAlign:"right"}}><div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:22,color:C.orange,fontWeight:500}}>{fmtH(hrs)}</div><div style={{fontSize:10,color:C.dim,marginTop:2}}>{new Set(eps.map(p=>new Date(p.clock_in).toDateString())).size} dias</div></div>
-                </div>
-                {byObra.length>0?<table><thead><tr><th>Obra</th><th>Local</th><th>Dias</th><th>Horas</th></tr></thead><tbody>{byObra.map(({obra,hrs:h,dias})=><tr key={obra.id}><td style={{fontWeight:600}}>{obra.name}</td><td style={{color:C.muted}}>{obra.location}</td><td style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11}}>{dias}</td><td style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:13,color:C.orange,fontWeight:500}}>{fmtH(h)}</td></tr>)}</tbody></table>
-                :<div style={{padding:"14px 20px",color:C.muted,fontSize:13}}>Sem registos</div>}
+              return<Card key={emp.id} style={{marginBottom:16}}><div style={{padding:"14px 20px",borderBottom:`1px solid ${C.border}`,display:"flex",justifyContent:"space-between",alignItems:"center"}}><div><div style={{fontFamily:"'Barlow Condensed',sans-serif",fontWeight:700,fontSize:17}}>{emp.name}</div><div style={{fontSize:12,color:C.muted,marginTop:2}}>{emp.role} · {eps.length} registos</div></div><div style={{textAlign:"right"}}><div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:22,color:C.orange,fontWeight:500}}>{fmtH(hrs)}</div><div style={{fontSize:10,color:C.dim,marginTop:2}}>{new Set(eps.map(p=>new Date(p.clock_in).toDateString())).size} dias</div></div></div>
+              {byObra.length>0?<table><thead><tr><th>Obra</th><th>Local</th><th>Dias</th><th>Horas</th></tr></thead><tbody>{byObra.map(({obra,hrs:h,dias})=><tr key={obra.id}><td style={{fontWeight:600}}>{obra.name}</td><td style={{color:C.muted}}>{obra.location}</td><td style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11}}>{dias}</td><td style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:13,color:C.orange,fontWeight:500}}>{fmtH(h)}</td></tr>)}</tbody></table>:<div style={{padding:"14px 20px",color:C.muted,fontSize:13}}>Sem registos</div>}
               </Card>;
             })}
           </div>}
@@ -309,18 +400,14 @@ export default function ConstruPonto() {
               const ops=pontos.filter(p=>p.obra_id===obra.id);
               const hrs=ops.filter(p=>p.clock_out).reduce((a,p)=>a+durMs(p.clock_in,p.clock_out),0);
               const byEmp=employees.map(e=>({emp:e,hrs:ops.filter(p=>p.employee_id===e.id&&p.clock_out).reduce((a,p)=>a+durMs(p.clock_in,p.clock_out),0),dias:new Set(ops.filter(p=>p.employee_id===e.id).map(p=>new Date(p.clock_in).toDateString())).size})).filter(x=>x.hrs>0).sort((a,b)=>b.hrs-a.hrs);
-              return<Card key={obra.id} style={{marginBottom:16}}>
-                <div style={{padding:"14px 20px",borderBottom:`1px solid ${C.border}`,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                  <div><div style={{fontFamily:"'Barlow Condensed',sans-serif",fontWeight:700,fontSize:17}}>{obra.name}</div><div style={{fontSize:12,color:C.muted,marginTop:2}}>{obra.location} · {ops.length} presenças</div></div>
-                  <div style={{textAlign:"right"}}><div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:22,color:C.orange,fontWeight:500}}>{fmtH(hrs)}</div><div style={{fontSize:10,color:C.dim,marginTop:2}}>{new Set(ops.map(p=>p.employee_id)).size} funcionários</div></div>
-                </div>
-                {byEmp.length>0?<table><thead><tr><th>Funcionário</th><th>Função</th><th>Dias</th><th>Horas</th></tr></thead><tbody>{byEmp.map(({emp,hrs:h,dias})=><tr key={emp.id}><td style={{fontWeight:600}}>{emp.name}</td><td style={{color:C.muted}}>{emp.role}</td><td style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11}}>{dias}</td><td style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:13,color:C.orange,fontWeight:500}}>{fmtH(h)}</td></tr>)}</tbody></table>
-                :<div style={{padding:"14px 20px",color:C.muted,fontSize:13}}>Sem registos</div>}
+              return<Card key={obra.id} style={{marginBottom:16}}><div style={{padding:"14px 20px",borderBottom:`1px solid ${C.border}`,display:"flex",justifyContent:"space-between",alignItems:"center"}}><div><div style={{fontFamily:"'Barlow Condensed',sans-serif",fontWeight:700,fontSize:17}}>{obra.name}</div><div style={{fontSize:12,color:C.muted,marginTop:2}}>{obra.location} · {ops.length} presenças</div></div><div style={{textAlign:"right"}}><div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:22,color:C.orange,fontWeight:500}}>{fmtH(hrs)}</div><div style={{fontSize:10,color:C.dim,marginTop:2}}>{new Set(ops.map(p=>p.employee_id)).size} funcionários</div></div></div>
+              {byEmp.length>0?<table><thead><tr><th>Funcionário</th><th>Função</th><th>Dias</th><th>Horas</th></tr></thead><tbody>{byEmp.map(({emp,hrs:h,dias})=><tr key={emp.id}><td style={{fontWeight:600}}>{emp.name}</td><td style={{color:C.muted}}>{emp.role}</td><td style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11}}>{dias}</td><td style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:13,color:C.orange,fontWeight:500}}>{fmtH(h)}</td></tr>)}</tbody></table>:<div style={{padding:"14px 20px",color:C.muted,fontSize:13}}>Sem registos</div>}
               </Card>;
             })}
           </div>}
         </div>}
 
+        {/* GESTÃO */}
         {view==="gestao"&&<div>
           <div style={{marginBottom:18}}><h1 style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:26,fontWeight:700}}>Gestão</h1><p style={{color:C.muted,fontSize:13,marginTop:3}}>Funcionários, obras e ferramentas do armazém</p></div>
           <div style={{display:"flex",gap:2,borderBottom:`1px solid ${C.border}`,marginBottom:22}}>
@@ -329,43 +416,16 @@ export default function ConstruPonto() {
             ))}
           </div>
           {gTab==="funcionarios"&&<div style={{display:"grid",gridTemplateColumns:"300px 1fr",gap:18,alignItems:"start"}}>
-            <Card style={{padding:20}}>
-              <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontWeight:700,fontSize:11,letterSpacing:2,textTransform:"uppercase",marginBottom:16,color:C.muted}}>Adicionar Funcionário</div>
-              <div style={{marginBottom:12}}><Label>Nome</Label><Inp value={nEN} onChange={setNEN} placeholder="Nome completo"/></div>
-              <div style={{marginBottom:16}}><Label>Função</Label><Inp value={nER} onChange={setNER} placeholder="Ex: Pedreiro, Electricista..."/></div>
-              <Btn onClick={addEmp} disabled={!nEN} style={{width:"100%"}}>+ Adicionar</Btn>
-            </Card>
-            <Card>
-              <CardHead extra={<Badge color={C.orange}>{employees.length}</Badge>}>Funcionários</CardHead>
-              <table><thead><tr><th>Nome</th><th>Função</th><th>Registos</th><th>Horas Totais</th><th></th></tr></thead>
-              <tbody>{employees.map(e=>{const hrs=pontos.filter(p=>p.employee_id===e.id&&p.clock_out).reduce((a,p)=>a+durMs(p.clock_in,p.clock_out),0);return<tr key={e.id}><td style={{fontWeight:600}}>{e.name}</td><td style={{color:C.muted}}>{e.role}</td><td style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11}}>{pontos.filter(p=>p.employee_id===e.id).length}</td><td style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:12,color:C.orange}}>{fmtH(hrs)}</td><td><button onClick={()=>delEmp(e.id)} style={{background:"none",border:"none",color:C.red,cursor:"pointer",fontSize:18}}>×</button></td></tr>;})}</tbody>
-            </table></Card>
+            <Card style={{padding:20}}><div style={{fontFamily:"'Barlow Condensed',sans-serif",fontWeight:700,fontSize:11,letterSpacing:2,textTransform:"uppercase",marginBottom:16,color:C.muted}}>Adicionar Funcionário</div><div style={{marginBottom:12}}><Label>Nome</Label><Inp value={nEN} onChange={setNEN} placeholder="Nome completo"/></div><div style={{marginBottom:16}}><Label>Função</Label><Inp value={nER} onChange={setNER} placeholder="Ex: Pedreiro, Electricista..."/></div><Btn onClick={addEmp} disabled={!nEN} style={{width:"100%"}}>+ Adicionar</Btn></Card>
+            <Card><CardHead extra={<Badge color={C.orange}>{employees.length}</Badge>}>Funcionários</CardHead><table><thead><tr><th>Nome</th><th>Função</th><th>Registos</th><th>Horas Totais</th><th></th></tr></thead><tbody>{employees.map(e=>{const hrs=pontos.filter(p=>p.employee_id===e.id&&p.clock_out).reduce((a,p)=>a+durMs(p.clock_in,p.clock_out),0);return<tr key={e.id}><td style={{fontWeight:600}}>{e.name}</td><td style={{color:C.muted}}>{e.role}</td><td style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11}}>{pontos.filter(p=>p.employee_id===e.id).length}</td><td style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:12,color:C.orange}}>{fmtH(hrs)}</td><td><button onClick={()=>delEmp(e.id)} style={{background:"none",border:"none",color:C.red,cursor:"pointer",fontSize:18}}>×</button></td></tr>;})}</tbody></table></Card>
           </div>}
           {gTab==="obras"&&<div style={{display:"grid",gridTemplateColumns:"300px 1fr",gap:18,alignItems:"start"}}>
-            <Card style={{padding:20}}>
-              <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontWeight:700,fontSize:11,letterSpacing:2,textTransform:"uppercase",marginBottom:16,color:C.muted}}>Adicionar Obra</div>
-              <div style={{marginBottom:12}}><Label>Nome da Obra</Label><Inp value={nON} onChange={setNON} placeholder="Nome do projecto"/></div>
-              <div style={{marginBottom:16}}><Label>Localização</Label><Inp value={nOL} onChange={setNOL} placeholder="Cidade / Localidade"/></div>
-              <Btn onClick={addObra} disabled={!nON} style={{width:"100%"}}>+ Adicionar</Btn>
-            </Card>
-            <Card>
-              <CardHead extra={<Badge color={C.orange}>{obras.length}</Badge>}>Obras</CardHead>
-              <table><thead><tr><th>Nome</th><th>Local</th><th>Presenças</th><th>Horas Totais</th><th></th></tr></thead>
-              <tbody>{obras.map(o=>{const hrs=pontos.filter(p=>p.obra_id===o.id&&p.clock_out).reduce((a,p)=>a+durMs(p.clock_in,p.clock_out),0);return<tr key={o.id}><td style={{fontWeight:600}}>{o.name}</td><td style={{color:C.muted}}>{o.location}</td><td style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11}}>{pontos.filter(p=>p.obra_id===o.id).length}</td><td style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:12,color:C.orange}}>{fmtH(hrs)}</td><td><button onClick={()=>delObra(o.id)} style={{background:"none",border:"none",color:C.red,cursor:"pointer",fontSize:18}}>×</button></td></tr>;})}</tbody>
-            </table></Card>
+            <Card style={{padding:20}}><div style={{fontFamily:"'Barlow Condensed',sans-serif",fontWeight:700,fontSize:11,letterSpacing:2,textTransform:"uppercase",marginBottom:16,color:C.muted}}>Adicionar Obra</div><div style={{marginBottom:12}}><Label>Nome da Obra</Label><Inp value={nON} onChange={setNON} placeholder="Nome do projecto"/></div><div style={{marginBottom:16}}><Label>Localização</Label><Inp value={nOL} onChange={setNOL} placeholder="Cidade / Localidade"/></div><Btn onClick={addObra} disabled={!nON} style={{width:"100%"}}>+ Adicionar</Btn></Card>
+            <Card><CardHead extra={<Badge color={C.orange}>{obras.length}</Badge>}>Obras</CardHead><table><thead><tr><th>Nome</th><th>Local</th><th>Presenças</th><th>Horas Totais</th><th></th></tr></thead><tbody>{obras.map(o=>{const hrs=pontos.filter(p=>p.obra_id===o.id&&p.clock_out).reduce((a,p)=>a+durMs(p.clock_in,p.clock_out),0);return<tr key={o.id}><td style={{fontWeight:600}}>{o.name}</td><td style={{color:C.muted}}>{o.location}</td><td style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11}}>{pontos.filter(p=>p.obra_id===o.id).length}</td><td style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:12,color:C.orange}}>{fmtH(hrs)}</td><td><button onClick={()=>delObra(o.id)} style={{background:"none",border:"none",color:C.red,cursor:"pointer",fontSize:18}}>×</button></td></tr>;})}</tbody></table></Card>
           </div>}
           {gTab==="ferramentas"&&<div style={{display:"grid",gridTemplateColumns:"300px 1fr",gap:18,alignItems:"start"}}>
-            <Card style={{padding:20}}>
-              <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontWeight:700,fontSize:11,letterSpacing:2,textTransform:"uppercase",marginBottom:16,color:C.muted}}>Adicionar Ferramenta</div>
-              <div style={{marginBottom:12}}><Label>Nome</Label><Inp value={nTN} onChange={setNTN} placeholder="Nome da ferramenta"/></div>
-              <div style={{marginBottom:16}}><Label>Categoria</Label><Inp value={nTC} onChange={setNTC} placeholder="Ex: Elétrico, Manual..."/></div>
-              <Btn onClick={addTool} disabled={!nTN} style={{width:"100%"}}>+ Adicionar</Btn>
-            </Card>
-            <Card>
-              <CardHead extra={<Badge color={C.orange}>{tools.length}</Badge>}>Ferramentas do Armazém</CardHead>
-              <table><thead><tr><th>Nome</th><th>Categoria</th><th>Levantamentos</th><th>Estado</th><th></th></tr></thead>
-              <tbody>{tools.map(t=>{const out=toolsOut.filter(r=>r.tool_id===t.id).length;return<tr key={t.id}><td style={{fontWeight:600}}>{t.name}</td><td><Badge color={C.muted}>{t.category}</Badge></td><td style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11}}>{ferRegs.filter(r=>r.tool_id===t.id).length}</td><td>{out>0?<Badge color={C.yellow}>{out} fora</Badge>:<Badge color={C.green}>disponível</Badge>}</td><td><button onClick={()=>delTool(t.id)} style={{background:"none",border:"none",color:C.red,cursor:"pointer",fontSize:18}}>×</button></td></tr>;})}</tbody>
-            </table></Card>
+            <Card style={{padding:20}}><div style={{fontFamily:"'Barlow Condensed',sans-serif",fontWeight:700,fontSize:11,letterSpacing:2,textTransform:"uppercase",marginBottom:16,color:C.muted}}>Adicionar Ferramenta</div><div style={{marginBottom:12}}><Label>Nome</Label><Inp value={nTN} onChange={setNTN} placeholder="Nome da ferramenta"/></div><div style={{marginBottom:16}}><Label>Categoria</Label><Inp value={nTC} onChange={setNTC} placeholder="Ex: Elétrico, Manual..."/></div><Btn onClick={addTool} disabled={!nTN} style={{width:"100%"}}>+ Adicionar</Btn></Card>
+            <Card><CardHead extra={<Badge color={C.orange}>{tools.length}</Badge>}>Ferramentas do Armazém</CardHead><table><thead><tr><th>Nome</th><th>Categoria</th><th>Levantamentos</th><th>Estado</th><th></th></tr></thead><tbody>{tools.map(t=>{const out=toolsOut.filter(r=>r.tool_id===t.id).length;return<tr key={t.id}><td style={{fontWeight:600}}>{t.name}</td><td><Badge color={C.muted}>{t.category}</Badge></td><td style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:11}}>{ferRegs.filter(r=>r.tool_id===t.id).length}</td><td>{out>0?<Badge color={C.yellow}>{out} fora</Badge>:<Badge color={C.green}>disponível</Badge>}</td><td><button onClick={()=>delTool(t.id)} style={{background:"none",border:"none",color:C.red,cursor:"pointer",fontSize:18}}>×</button></td></tr>;})}</tbody></table></Card>
           </div>}
         </div>}
 
