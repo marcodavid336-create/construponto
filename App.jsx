@@ -162,6 +162,33 @@ function PendingScreen({onLogout,profile}){
   );
 }
 
+// ── PROFILE ROW (componente separado para evitar useState em map) ─────────────
+function ProfileRow({p, companies, onActivate}) {
+  const [selComp, setSelComp] = useState(p.company_id ? String(p.company_id) : "");
+  const [selRole, setSelRole] = useState(p.role);
+  return (
+    <tr>
+      <td style={{fontWeight:600}}>{p.display_name||"—"}</td>
+      <td>
+        <Sel value={selComp} onChange={setSelComp} style={{minWidth:160,padding:"5px 8px",fontSize:12}}>
+          <option value="">Sem empresa</option>
+          {companies.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
+        </Sel>
+      </td>
+      <td>
+        <Sel value={selRole} onChange={setSelRole} style={{minWidth:130,padding:"5px 8px",fontSize:12}}>
+          <option value="pending">Pendente</option>
+          <option value="company">Empresa</option>
+          <option value="employee">Funcionário</option>
+          <option value="admin">Admin</option>
+        </Sel>
+      </td>
+      <td style={{fontSize:11,color:C.dim}}>{fmtD(p.created_at)}</td>
+      <td><Btn variant="green" onClick={()=>onActivate(p.id,selRole,selComp||null)} style={{padding:"5px 12px",fontSize:10}}>Guardar</Btn></td>
+    </tr>
+  );
+}
+
 // ══════════════════════════════════════════════════════════════════════════════
 // ── ADMIN APP ─────────────────────────────────────────────────────────────────
 // ══════════════════════════════════════════════════════════════════════════════
@@ -272,19 +299,8 @@ function AdminApp({user,profile,onLogout}){
 
           {pendingProfiles.length>0&&<Card style={{marginBottom:18,border:`1px solid ${C.red}33`}}>
             <CardHead extra={<Badge color={C.red}>{pendingProfiles.length} pendentes</Badge>}><Dot color={C.red}/>Utilizadores a Aguardar Activação</CardHead>
-            <table><thead><tr><th>Nome</th><th>Email</th><th>Registado em</th><th>Associar a Empresa</th><th>Nível</th><th></th></tr></thead>
-            <tbody>{pendingProfiles.map(p=>{
-              const[selComp,setSelComp]=useState("");
-              const[selRole,setSelRole]=useState("company");
-              return<tr key={p.id}>
-                <td style={{fontWeight:600}}>{p.display_name||"—"}</td>
-                <td style={{color:C.muted,fontSize:11,fontFamily:"'IBM Plex Mono',monospace"}}>{p.id.slice(0,8)}...</td>
-                <td style={{fontSize:11,color:C.dim}}>{fmtD(p.created_at)}</td>
-                <td><Sel value={selComp} onChange={setSelComp} style={{minWidth:180}}><option value="">Seleccionar empresa...</option>{companies.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</Sel></td>
-                <td><Sel value={selRole} onChange={setSelRole} style={{minWidth:140}}><option value="company">Empresa</option><option value="employee">Funcionário</option></Sel></td>
-                <td><Btn variant="green" onClick={()=>activateProfile(p.id,selRole,selComp)} style={{padding:"5px 12px",fontSize:10}}>✓ Activar</Btn></td>
-              </tr>;
-            })}</tbody></table>
+            <table><thead><tr><th>Nome</th><th>Registado em</th><th>Associar a Empresa</th><th>Nível</th><th></th></tr></thead>
+            <tbody>{pendingProfiles.map(p=><ProfileRow key={p.id} p={p} companies={companies} onActivate={activateProfile}/>)}</tbody>
           </Card>}
 
           <Card>
@@ -344,31 +360,7 @@ function AdminApp({user,profile,onLogout}){
             <CardHead extra={<Badge color={C.purple}>{profiles.length}</Badge>}>Todos os Utilizadores</CardHead>
             {profiles.length===0?<div style={{padding:"24px 20px",color:C.muted,fontSize:13,textAlign:"center"}}>Nenhum utilizador ainda</div>
             :<table><thead><tr><th>Nome</th><th>Empresa</th><th>Nível</th><th>Registado</th><th>Acções</th></tr></thead>
-            <tbody>{profiles.map(p=>{
-              const[selComp,setSelComp]=useState(p.company_id||"");
-              const[selRole,setSelRole]=useState(p.role);
-              const roleColor={admin:C.orange,company:C.blue,employee:C.green,pending:C.red};
-              const roleLabel={admin:"Admin",company:"Empresa",employee:"Funcionário",pending:"Pendente"};
-              return<tr key={p.id}>
-                <td style={{fontWeight:600}}>{p.display_name||"—"}</td>
-                <td>
-                  <Sel value={selComp} onChange={setSelComp} style={{minWidth:160,padding:"5px 8px",fontSize:12}}>
-                    <option value="">Sem empresa</option>
-                    {companies.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
-                  </Sel>
-                </td>
-                <td>
-                  <Sel value={selRole} onChange={setSelRole} style={{minWidth:130,padding:"5px 8px",fontSize:12}}>
-                    <option value="pending">Pendente</option>
-                    <option value="company">Empresa</option>
-                    <option value="employee">Funcionário</option>
-                    <option value="admin">Admin</option>
-                  </Sel>
-                </td>
-                <td style={{fontSize:11,color:C.dim}}>{fmtD(p.created_at)}</td>
-                <td><Btn variant="green" onClick={()=>activateProfile(p.id,selRole,selComp||null)} style={{padding:"5px 12px",fontSize:10}}>Guardar</Btn></td>
-              </tr>;
-            })}</tbody></table>}
+            <tbody>{profiles.map(p=><ProfileRow key={p.id} p={p} companies={companies} onActivate={activateProfile}/>)}</tbody></table>}
           </Card>
         </div>}
 
@@ -794,4 +786,5 @@ function EmployeeApp({user,profile,onLogout}){
     </div>
   );
 }
+
 
