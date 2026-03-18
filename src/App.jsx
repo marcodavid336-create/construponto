@@ -300,7 +300,7 @@ function AdminApp({user,profile,onLogout}){
           {pendingProfiles.length>0&&<Card style={{marginBottom:18,border:`1px solid ${C.red}33`}}>
             <CardHead extra={<Badge color={C.red}>{pendingProfiles.length} pendentes</Badge>}><Dot color={C.red}/>Utilizadores a Aguardar Activação</CardHead>
             <table><thead><tr><th>Nome</th><th>Registado em</th><th>Associar a Empresa</th><th>Nível</th><th></th></tr></thead>
-            <tbody>{pendingProfiles.map(p=><ProfileRow key={p.id} p={p} companies={companies} onActivate={activateProfile}/>)}</tbody>
+            <tbody>{pendingProfiles.map(p=><ProfileRow key={p.id} p={p} companies={companies} onActivate={activateProfile}/>)}</tbody></table>
           </Card>}
 
           <Card>
@@ -786,6 +786,7 @@ function EmployeeApp({user,profile,onLogout}){
     </div>
   );
 }
+
 
 
 
